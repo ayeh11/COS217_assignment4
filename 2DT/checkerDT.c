@@ -51,10 +51,11 @@ boolean CheckerDT_Node_isValid(Node_T oNNode) {
    parameter list to facilitate constructing your checks.
    If you do, you should update this function comment.
 */
-static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenPaths) {
+static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenNodes) {
    size_t ulIndex;
-   Path_T oPath;
+   size_t numChildren;
    size_t i;
+   Node_T oNParent;
 
    if(oNNode!= NULL) {
 
@@ -64,15 +65,35 @@ static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenPaths) {
          return FALSE;
 
       /* Check for duplicate path */
-      oPath = Node_getPath(oNNode);
-
-      for(i = 0; i < DynArray_getLength(oSeenPaths); i++) {
-         if(Node_compare(oNNode, DynArray_get(oSeenPaths, i)) == 0) {
-            fprintf(stderr, "Duplicate path found: %s\n", Path_getPathname(oPath));
+      for(i = 0; i < DynArray_getLength(oSeenNodes); i++) {
+         if(Node_compare(oNNode, DynArray_get(oSeenNodes, i)) == 0) {
+            fprintf(stderr, "Duplicate path found: %s\n", Path_getPathname(Node_getPath(oNNode)));
             return FALSE;
          }
       }
-      DynArray_add(oSeenPaths, oNNode);
+      /* Check for lexicographic order */
+      oNParent = Node_getParent(oNNode);
+      if (oNParent != NULL) {
+         numChildren = Node_getNumChildren(oNParent);
+         for(i = 0; i < numChildren - 1; i++) {
+            Node_T oNChild1 = NULL;
+            Node_T oNChild2 = NULL;
+            /* Get adjacent children */
+            if(Node_getChild(oNParent, i, &oNChild1) != SUCCESS ||
+               Node_getChild(oNParent, i + 1, &oNChild2) != SUCCESS) {
+               fprintf(stderr, "Error retrieving children\n");
+               return FALSE;
+            }  
+
+            if(Node_compare(oNChild1, oNChild2) < 0) {
+               fprintf(stderr, "Children not in lexicographic order: %s\n", 
+                     Path_getPathname(Node_getPath(oNNode)));
+               return FALSE;
+            }
+         }
+      }
+
+      DynArray_add(oSeenNodes, oNNode);
 
       /* Recur on every child of oNNode */
       for(ulIndex = 0; ulIndex < Node_getNumChildren(oNNode); ulIndex++)
@@ -87,7 +108,7 @@ static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenPaths) {
 
          /* if recurring down one subtree results in a failed check
             farther down, passes the failure back up immediately */
-         if(!CheckerDT_treeCheck(oNChild, oSeenPaths))
+         if(!CheckerDT_treeCheck(oNChild, oSeenNodes))
             return FALSE;
       }
    }
@@ -98,7 +119,7 @@ static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenPaths) {
 boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
                           size_t ulCount) {
 
-   DynArray_T oSeenPaths;
+   DynArray_T oSeenNodes;
    boolean bResult;
 
    /* Sample check on a top-level data structure invariant:
@@ -110,9 +131,9 @@ boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
       }
 
    /* Now checks invariants recursively at each node from the root. */
-   oSeenPaths = DynArray_new(0);
-   bResult = CheckerDT_treeCheck(oNRoot, oSeenPaths);
-   DynArray_free(oSeenPaths);
+   oSeenNodes = DynArray_new(0);
+   bResult = CheckerDT_treeCheck(oNRoot, oSeenNodes);
+   DynArray_free(oSeenNodes);
 
    return bResult;
 }
