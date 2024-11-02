@@ -3,12 +3,12 @@ Assignment 4 readme File
 ------------------------------------------------------------------------
 Student 1: What is your name?
 
-
+Annika Yeh
 
 ------------------------------------------------------------------------
 Student 2: What is your name?
 
-
+William Oh
 
 ------------------------------------------------------------------------
 Student 1: What authorized sources of information did you use to
@@ -137,15 +137,18 @@ the error manifests itself or is "noticed" by the client.
 
       Executable         Function with the underlying error
 ===============================================================
-         ./bdtBad1        
+         ./bdtBad1        BDT_insert() - does not check for 
+                                          bIsInitialized
 ---------------------------------------------------------------
-         ./bdtBad2        
+         ./bdtBad2        BDT_freeSubtree() - second child does not move
+                                          after removal of first child 
 ---------------------------------------------------------------
-         ./bdtBad3        
+         ./bdtBad3        BDT_addChild() - child is set as current child
+                                          of parents instead of param
 ---------------------------------------------------------------
-         ./bdtBad4        
+         ./bdtBad4        BDT_strlenAccumulate() - did not add one
 ---------------------------------------------------------------
-         ./bdtBad5        
+         ./bdtBad5        BDT_findNode() - did not free oPPath
 ===============================================================
 
 ------------------------------------------------------------------------

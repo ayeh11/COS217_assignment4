@@ -1,6 +1,6 @@
 /*--------------------------------------------------------------------*/
 /* checkerDT.c                                                        */
-/* Author:                                                            */
+/* Author: Annika Yeh and William Oh                                  */
 /*--------------------------------------------------------------------*/
 
 #include <assert.h>
@@ -51,8 +51,10 @@ boolean CheckerDT_Node_isValid(Node_T oNNode) {
    parameter list to facilitate constructing your checks.
    If you do, you should update this function comment.
 */
-static boolean CheckerDT_treeCheck(Node_T oNNode) {
+static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenPaths) {
    size_t ulIndex;
+   Path_T oPath;
+   size_t i;
 
    if(oNNode!= NULL) {
 
@@ -60,6 +62,17 @@ static boolean CheckerDT_treeCheck(Node_T oNNode) {
       /* If not, pass that failure back up immediately */
       if(!CheckerDT_Node_isValid(oNNode))
          return FALSE;
+
+      /* Check for duplicate path */
+      oPath = Node_getPath(oNNode);
+
+      for(i = 0; i < DynArray_getLength(oSeenPaths); i++) {
+         if(Node_compare(oNNode, DynArray_get(oSeenPaths, i)) == 0) {
+            fprintf(stderr, "Duplicate path found: %s\n", Path_getPathname(oPath));
+            return FALSE;
+         }
+      }
+      DynArray_add(oSeenPaths, oNNode);
 
       /* Recur on every child of oNNode */
       for(ulIndex = 0; ulIndex < Node_getNumChildren(oNNode); ulIndex++)
@@ -74,7 +87,7 @@ static boolean CheckerDT_treeCheck(Node_T oNNode) {
 
          /* if recurring down one subtree results in a failed check
             farther down, passes the failure back up immediately */
-         if(!CheckerDT_treeCheck(oNChild))
+         if(!CheckerDT_treeCheck(oNChild, oSeenPaths))
             return FALSE;
       }
    }
@@ -85,6 +98,9 @@ static boolean CheckerDT_treeCheck(Node_T oNNode) {
 boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
                           size_t ulCount) {
 
+   DynArray_T oSeenPaths;
+   boolean bResult;
+
    /* Sample check on a top-level data structure invariant:
       if the DT is not initialized, its count should be 0. */
    if(!bIsInitialized)
@@ -94,5 +110,9 @@ boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
       }
 
    /* Now checks invariants recursively at each node from the root. */
-   return CheckerDT_treeCheck(oNRoot);
+   oSeenPaths = DynArray_new(0);
+   bResult = CheckerDT_treeCheck(oNRoot, oSeenPaths);
+   DynArray_free(oSeenPaths);
+
+   return bResult;
 }
