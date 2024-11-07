@@ -85,11 +85,11 @@ static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenNodes) {
                return FALSE;
             }  
 
-            if(Node_compare(oNChild1, oNChild2) < 0) {
+            if(Path_comparePath(Node_getPath(oNChild1), Node_getPath(oNChild2)) > 0) {
                fprintf(stderr, "Children not in lexicographic order: %s\n", 
                      Path_getPathname(Node_getPath(oNNode)));
                return FALSE;
-            }
+            } 
          }
       }
 
