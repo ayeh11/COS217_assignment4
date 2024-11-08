@@ -121,6 +121,7 @@ boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
 
    DynArray_T oSeenNodes;
    boolean bResult;
+   size_t actualCount;
 
    /* Sample check on a top-level data structure invariant:
       if the DT is not initialized, its count should be 0. */
@@ -130,9 +131,17 @@ boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
          return FALSE;
       }
 
-   /* Now checks invariants recursively at each node from the root. */
+   /* Checks invariants recursively at each node from the root. */
    oSeenNodes = DynArray_new(0);
    bResult = CheckerDT_treeCheck(oNRoot, oSeenNodes);
+
+   /* Check number of seen nodes matches ulCount */
+   actualCount = DynArray_getLength(oSeenNodes);
+   if(actualCount != ulCount) {
+      fprintf(stderr, "Node count mismatch\n");
+      bResult = FALSE;
+   }
+
    DynArray_free(oSeenNodes);
 
    return bResult;
