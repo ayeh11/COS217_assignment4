@@ -162,5 +162,31 @@ What are your critiques of the given DT implementations, as
 specified in Step 2.5?
 
 
+Unclear Naming:
+- Variables like ulCount might cause confusion as to what exactly is
+being counted. Instead, use a name like ulNodeCount.
+- Function names like Node_getNumChildren don't match with the naming
+scheme of using "count" to refer to the number of a specific quantity 
+- Instead, using a name like Node_getChildCount would be more in line
+with the naming scheme established in other parts of the codebase.
+
+Inconsistent parameter order:
+- Node_new parameter order is (Path_T oPPath, Node_T oNParent, Node_T
+poNResult), but boolean Node_hasChild parameter order is (Node_T 
+oNParent, Path_T oPPath, size_tpulChildID)
+- It would make more sense if they were consistent. Since we add new
+child nodes in the parameter order (Path_T [path of child], Node_T [the 
+parent node]), it makes sense to check if a parent has the child in the 
+same order of (Path_T [path of child], Node_T [the parent node]) 
+instead of (Node_T, Path_T)
+
+Potential for weaker coupling:
+- dtGood finds the depth of a node by calling "Path_getDepth
+(Node_getPath(oNCurr));"
+- Instead, could make a function and implementation in nodeDT that
+returns the depth of a node when input a node.
+- For example, making a function in nodeDT called 
+      Node_getDepth(Node_T oNCurr);
+- This would weaken coupling between dtGood and path
 
 ------------------------------------------------------------------------
