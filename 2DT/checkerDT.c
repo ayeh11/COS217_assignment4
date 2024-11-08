@@ -138,7 +138,7 @@ boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
    /* Check number of seen nodes matches ulCount */
    actualCount = DynArray_getLength(oSeenNodes);
    if(actualCount != ulCount) {
-      fprintf(stderr, "Node count mismatch\n");
+      fprintf(stderr, "Node count doesn't match\n");
       bResult = FALSE;
    }
 
