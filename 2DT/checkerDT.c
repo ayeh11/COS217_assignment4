@@ -43,19 +43,53 @@ boolean CheckerDT_Node_isValid(Node_T oNNode) {
 }
 
 /*
-   Performs a pre-order traversal of the tree rooted at oNNode.
-   Returns FALSE if a broken invariant is found and
-   returns TRUE otherwise.
+   Helper function to check if children of a node oNParent are in 
+   lexicographic order.
+   Returns TRUE if order is correct, FALSE otherwise.
+*/
+static boolean CheckerDT_Node_isLexicographical(Node_T oNParent) {
+   size_t numChildren;
+   size_t i;
+   numChildren = Node_getNumChildren(oNParent);
+   for (i = 0; i < numChildren - 1; i++) {
+      Node_T oNChild1 = NULL;
+      Node_T oNChild2 = NULL;
+
+      /* Get adjacent children */
+      if (Node_getChild(oNParent, i, &oNChild1) != SUCCESS ||
+          Node_getChild(oNParent, i + 1, &oNChild2) != SUCCESS) {
+         fprintf(stderr, "Error retrieving children\n");
+         return FALSE;
+      }
+
+      /* Compare paths of adjacent children */
+      if (Path_comparePath(Node_getPath(oNChild1), 
+      Node_getPath(oNChild2)) > 0) {
+         fprintf(stderr, "Children not in lexicographic order\n");
+         return FALSE;
+      }
+   }
+   return TRUE;
+}
+
+/*
+   Performs a pre-order traversal of the tree rooted at oNNode and uses
+   a dyanmic array of oSeenNodes to check for validity. This function 
+   checks that the tree does not have duplicate paths, nodes are in 
+   lexicographic order, and the tree has a current number of children 
+   recorded. It does so by recurring through the nodes starting at 
+   oNNode and comparing their information to the previous nodes saved
+   in oSeenNodes.
 
    You may want to change this function's return type or
    parameter list to facilitate constructing your checks.
    If you do, you should update this function comment.
 */
-static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenNodes) {
+static boolean CheckerDT_treeCheck(Node_T oNNode, 
+DynArray_T oSeenNodes) {
    size_t ulIndex;
-   size_t numChildren;
-   size_t i;
    Node_T oNParent;
+   size_t i;
 
    if(oNNode!= NULL) {
 
@@ -67,33 +101,20 @@ static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenNodes) {
       /* Check for duplicate path */
       for(i = 0; i < DynArray_getLength(oSeenNodes); i++) {
          if(Node_compare(oNNode, DynArray_get(oSeenNodes, i)) == 0) {
-            fprintf(stderr, "Duplicate path found: %s\n", Path_getPathname(Node_getPath(oNNode)));
+            fprintf(stderr, "Duplicate path found: %s\n", 
+            Path_getPathname(Node_getPath(oNNode)));
             return FALSE;
-         }
-      }
-      /* Check for lexicographic order */
-      oNParent = Node_getParent(oNNode);
-      if (oNParent != NULL) {
-         numChildren = Node_getNumChildren(oNParent);
-         for(i = 0; i < numChildren - 1; i++) {
-            Node_T oNChild1 = NULL;
-            Node_T oNChild2 = NULL;
-            /* Get adjacent children */
-            if(Node_getChild(oNParent, i, &oNChild1) != SUCCESS ||
-               Node_getChild(oNParent, i + 1, &oNChild2) != SUCCESS) {
-               fprintf(stderr, "Error retrieving children\n");
-               return FALSE;
-            }  
-
-            if(Path_comparePath(Node_getPath(oNChild1), Node_getPath(oNChild2)) > 0) {
-               fprintf(stderr, "Children not in lexicographic order: %s\n", 
-                     Path_getPathname(Node_getPath(oNNode)));
-               return FALSE;
-            } 
          }
       }
 
       DynArray_add(oSeenNodes, oNNode);
+
+      /* Check lexicographic order of children */
+      oNParent = Node_getParent(oNNode);
+      if (oNParent != NULL && 
+      !CheckerDT_Node_isLexicographical(oNParent)) {
+         return FALSE;
+      }
 
       /* Recur on every child of oNNode */
       for(ulIndex = 0; ulIndex < Node_getNumChildren(oNNode); ulIndex++)
@@ -102,7 +123,10 @@ static boolean CheckerDT_treeCheck(Node_T oNNode, DynArray_T oSeenNodes) {
          int iStatus = Node_getChild(oNNode, ulIndex, &oNChild);
 
          if(iStatus != SUCCESS) {
-            fprintf(stderr, "getNumChildren claims more children than getChild returns\n");
+            fprintf(
+               stderr, 
+               "getNumChildren claims more children than getChild returns\n"
+               );
             return FALSE;
          }
 
@@ -138,7 +162,7 @@ boolean CheckerDT_isValid(boolean bIsInitialized, Node_T oNRoot,
    /* Check number of seen nodes matches ulCount */
    actualCount = DynArray_getLength(oSeenNodes);
    if(actualCount != ulCount) {
-      fprintf(stderr, "Node count doesn't match\n");
+      fprintf(stderr, "Number of seen nodes matches ulCount\n");
       bResult = FALSE;
    }
 
